@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #c71c25;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #4cc9f0;
+            --gray: #6c757d;
+            --border: #dee2e6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .app-container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .input-section {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .preview-section {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: var(--primary);
+            color: rgb(247, 241, 241);
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-align: center;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e62525;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+        }
+        
+        .btn-success:hover {
+            background-color: #e62525;
+        }
+        
+        .btn-full {
+            width: 100%;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .resume-preview {
+            flex: 1;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 20px;
+            min-height: 500px;
+            overflow-y: auto;
+            background: white;
+        }
+        
+        .resume-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .resume-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .resume-contact {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 10px;
+            color: var(--gray);
+        }
+        
+        .resume-section {
+            margin-bottom: 20px;
+        }
+        
+        .resume-section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .experience-item, .education-item {
+            margin-bottom: 15px;
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .item-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .item-date {
+            color: var(--gray);
+            font-style: italic;
+        }
+        
+        .item-subtitle {
+            font-weight: 500;
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+        
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .skill-tag {
+            background-color: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .enhance-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .enhance-option input {
+            width: auto;
+            margin-right: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .ai-processing {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .input-section, .preview-section {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Resume Builder</h1>
+            <p>Create professional, ATS-friendly resumes with AI enhancement</p>
+        </header>
+        
+        <div class="app-container">
+            <div class="input-section">
+                <div class="tabs">
+                    <div class="tab active" data-tab="personal">Personal</div>
+                    <div class="tab" data-tab="experience">Experience</div>
+                    <div class="tab" data-tab="education">Education</div>
+                    <div class="tab" data-tab="skills">Skills</div>
+                </div>
+                
+                <div class="tab-content active" id="personal-tab">
+                    <h2 class="section-title">Personal Information</h2>
+                    
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" placeholder="John Doe">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" placeholder="john.doe@example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" placeholder="(123) 456-7890">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <input type="text" id="location" placeholder="City, State">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="linkedin">LinkedIn Profile (Optional)</label>
+                        <input type="url" id="linkedin" placeholder="https://linkedin.com/in/johndoe">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="portfolio">Portfolio/Website (Optional)</label>
+                        <input type="url" id="portfolio" placeholder="https://johndoe.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="summary">Professional Summary</label>
+                        <textarea id="summary" placeholder="Brief overview of your professional background and career objectives"></textarea>
+                    </div>
+                    
+                    <button class="btn btn-secondary next-tab" data-next="experience">Next: Experience</button>
+                </div>
+                
+                <div class="tab-content" id="experience-tab">
+                    <h2 class="section-title">Work Experience</h2>
+                    
+                    <div id="experience-container">
+                        <div class="experience-item-form">
+                            <div class="form-group">
+                                <label for="jobTitle">Job Title</label>
+                                <input type="text" class="job-title" placeholder="Software Engineer">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="company">Company</label>
+                                <input type="text" class="company" placeholder="Tech Company Inc.">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="location">Location</label>
+                                <input type="text" class="location" placeholder="San Francisco, CA">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="startDate">Start Date</label>
+                                <input type="month" class="start-date">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="endDate">End Date</label>
+                                <input type="month" class="end-date">
+                                <div class="enhance-option">
+                                    <input type="checkbox" class="current-job"> I currently work here
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="description">Description</label>
+                                <textarea class="description" placeholder="Describe your responsibilities and achievements"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" id="add-experience">Add Another Experience</button>
+                    
+                    <div class="action-buttons">
+                        <button class="btn prev-tab" data-prev="personal">Previous</button>
+                        <button class="btn btn-secondary next-tab" data-next="education">Next: Education</button>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="education-tab">
+                    <h2 class="section-title">Education</h2>
+                    
+                    <div id="education-container">
+                        <div class="education-item-form">
+                            <div class="form-group">
+                                <label for="degree">Degree</label>
+                                <input type="text" class="degree" placeholder="Bachelor of Science in Computer Science">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="institution">Institution</label>
+                                <input type="text" class="institution" placeholder="University of Technology">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="location">Location</label>
+                                <input type="text" class="location" placeholder="Boston, MA">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="graduationDate">Graduation Date</label>
+                                <input type="month" class="graduation-date">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="gpa">GPA (Optional)</label>
+                                <input type="text" class="gpa" placeholder="3.8">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" id="add-education">Add Another Education</button>
+                    
+                    <div class="action-buttons">
+                        <button class="btn prev-tab" data-prev="experience">Previous</button>
+                        <button class="btn btn-secondary next-tab" data-next="skills">Next: Skills</button>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="skills-tab">
+                    <h2 class="section-title">Skills</h2>
+                    
+                    <div class="form-group">
+                        <label for="skills">Add Skills (comma separated)</label>
+                        <textarea id="skills" placeholder="JavaScript, React, Node.js, Python, Project Management"></textarea>
+                    </div>
+                    
+                    <div class="enhance-option">
+                        <input type="checkbox" id="enhance-content" checked>
+                        <label for="enhance-content">Use AI to enhance my resume content</label>
+                    </div>
+                    
+                    <div class="ai-processing" id="ai-processing">
+                        <div class="spinner"></div>
+                        <p>AI is enhancing your resume content...</p>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn prev-tab" data-prev="education">Previous</button>
+                        <button class="btn btn-success" id="generate-resume">Generate Resume</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="preview-section">
+                <h2 class="section-title">Resume Preview</h2>
+                
+                <div class="resume-preview" id="resume-preview">
+                    <div class="resume-header">
+                        <div class="resume-name" id="preview-name">Your Name</div>
+                        <div class="resume-contact">
+                            <span id="preview-email">email@example.com</span> | 
+                            <span id="preview-phone">(123) 456-7890</span> | 
+                            <span id="preview-location">City, State</span>
+                        </div>
+                        <div id="preview-links"></div>
+                    </div>
+                    
+                    <div class="resume-section">
+                        <div class="resume-section-title">Professional Summary</div>
+                        <p id="preview-summary">Your professional summary will appear here.</p>
+                    </div>
+                    
+                    <div class="resume-section">
+                        <div class="resume-section-title">Work Experience</div>
+                        <div id="preview-experience">
+                            <p>Your work experience will appear here.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="resume-section">
+                        <div class="resume-section-title">Education</div>
+                        <div id="preview-education">
+                            <p>Your education information will appear here.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="resume-section">
+                        <div class="resume-section-title">Skills</div>
+                        <div class="skills-list" id="preview-skills">
+                            <span class="skill-tag">Your skills will appear here</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-full" id="download-pdf">Download as PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab navigation
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab') + '-tab';
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // Next tab buttons
+        document.querySelectorAll('.next-tab').forEach(button => {
+            button.addEventListener('click', () => {
+                const nextTab = button.getAttribute('data-next');
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                document.querySelector(`.tab[data-tab="${nextTab}"]`).classList.add('active');
+                document.getElementById(`${nextTab}-tab`).classList.add('active');
+            });
+        });
+        
+        // Previous tab buttons
+        document.querySelectorAll('.prev-tab').forEach(button => {
+            button.addEventListener('click', () => {
+                const prevTab = button.getAttribute('data-prev');
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                document.querySelector(`.tab[data-tab="${prevTab}"]`).classList.add('active');
+                document.getElementById(`${prevTab}-tab`).classList.add('active');
+            });
+        });
+        
+        // Add experience section
+        document.getElementById('add-experience').addEventListener('click', () => {
+            const container = document.getElementById('experience-container');
+            const newExperience = container.firstElementChild.cloneNode(true);
+            
+            // Clear input values in the new experience section
+            newExperience.querySelectorAll('input').forEach(input => input.value = '');
+            newExperience.querySelectorAll('textarea').forEach(textarea => textarea.value = '');
+            
+            container.appendChild(newExperience);
+        });
+        
+        // Add education section
+        document.getElementById('add-education').addEventListener('click', () => {
+            const container = document.getElementById('education-container');
+            const newEducation = container.firstElementChild.cloneNode(true);
+            
+            // Clear input values in the new education section
+            newEducation.querySelectorAll('input').forEach(input => input.value = '');
+            
+            container.appendChild(newEducation);
+        });
+        
+        // Generate resume
+        document.getElementById('generate-resume').addEventListener('click', () => {
+            // Show AI processing if enabled
+            const enhanceContent = document.getElementById('enhance-content').checked;
+            if (enhanceContent) {
+                document.getElementById('ai-processing').style.display = 'block';
+                
+                // Simulate AI processing delay
+                setTimeout(() => {
+                    document.getElementById('ai-processing').style.display = 'none';
+                    updateResumePreview();
+                }, 2000);
+            } else {
+                updateResumePreview();
+            }
+        });
+        
+        // Update resume preview
+        function updateResumePreview() {
+            // Personal information
+            document.getElementById('preview-name').textContent = document.getElementById('fullName').value || 'Your Name';
+            document.getElementById('preview-email').textContent = document.getElementById('email').value || 'email@example.com';
+            document.getElementById('preview-phone').textContent = document.getElementById('phone').value || '(123) 456-7890';
+            document.getElementById('preview-location').textContent = document.getElementById('location').value || 'City, State';
+            
+            // Links
+            const linksContainer = document.getElementById('preview-links');
+            linksContainer.innerHTML = '';
+            
+            const linkedin = document.getElementById('linkedin').value;
+            const portfolio = document.getElementById('portfolio').value;
+            
+            if (linkedin || portfolio) {
+                if (linkedin) {
+                    const linkedinLink = document.createElement('a');
+                    linkedinLink.href = linkedin;
+                    linkedinLink.textContent = 'LinkedIn';
+                    linkedinLink.target = '_blank';
+                    linksContainer.appendChild(linkedinLink);
+                }
+                
+                if (linkedin && portfolio) {
+                    linksContainer.appendChild(document.createTextNode(' | '));
+                }
+                
+                if (portfolio) {
+                    const portfolioLink = document.createElement('a');
+                    portfolioLink.href = portfolio;
+                    portfolioLink.textContent = 'Portfolio';
+                    portfolioLink.target = '_blank';
+                    linksContainer.appendChild(portfolioLink);
+                }
+            }
+            
+            // Summary
+            let summary = document.getElementById('summary').value || 'Your professional summary will appear here.';
+            
+            // AI enhancement for summary
+            if (document.getElementById('enhance-content').checked) {
+                summary = enhanceText(summary, 'summary');
+            }
+            
+            document.getElementById('preview-summary').textContent = summary;
+            
+            // Experience
+            const experienceContainer = document.getElementById('preview-experience');
+            experienceContainer.innerHTML = '';
+            
+            const experienceForms = document.querySelectorAll('.experience-item-form');
+            
+            if (experienceForms.length === 0 || !experienceForms[0].querySelector('.job-title').value) {
+                experienceContainer.innerHTML = '<p>Your work experience will appear here.</p>';
+            } else {
+                experienceForms.forEach(form => {
+                    const jobTitle = form.querySelector('.job-title').value;
+                    const company = form.querySelector('.company').value;
+                    const location = form.querySelector('.location').value;
+                    const startDate = form.querySelector('.start-date').value;
+                    const endDate = form.querySelector('.end-date').value;
+                    const currentJob = form.querySelector('.current-job').checked;
+                    let description = form.querySelector('.description').value;
+                    
+                    if (!jobTitle) return;
+                    
+                    // AI enhancement for experience description
+                    if (document.getElementById('enhance-content').checked) {
+                        description = enhanceText(description, 'experience');
+                    }
+                    
+                    const experienceItem = document.createElement('div');
+                    experienceItem.className = 'experience-item';
+                    
+                    const itemHeader = document.createElement('div');
+                    itemHeader.className = 'item-header';
+                    
+                    const itemTitle = document.createElement('div');
+                    itemTitle.className = 'item-title';
+                    itemTitle.textContent = jobTitle;
+                    
+                    const itemDate = document.createElement('div');
+                    itemDate.className = 'item-date';
+                    
+                    if (startDate) {
+                        const start = new Date(startDate);
+                        const formattedStart = start.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+                        
+                        if (currentJob) {
+                            itemDate.textContent = `${formattedStart} - Present`;
+                        } else if (endDate) {
+                            const end = new Date(endDate);
+                            const formattedEnd = end.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+                            itemDate.textContent = `${formattedStart} - ${formattedEnd}`;
+                        } else {
+                            itemDate.textContent = `${formattedStart}`;
+                        }
+                    }
+                    
+                    itemHeader.appendChild(itemTitle);
+                    itemHeader.appendChild(itemDate);
+                    
+                    const itemSubtitle = document.createElement('div');
+                    itemSubtitle.className = 'item-subtitle';
+                    itemSubtitle.textContent = `${company}${location ? `, ${location}` : ''}`;
+                    
+                    const itemDescription = document.createElement('div');
+                    itemDescription.innerHTML = description.replace(/\n/g, '<br>');
+                    
+                    experienceItem.appendChild(itemHeader);
+                    experienceItem.appendChild(itemSubtitle);
+                    experienceItem.appendChild(itemDescription);
+                    
+                    experienceContainer.appendChild(experienceItem);
+                });
+            }
+            
+            // Education
+            const educationContainer = document.getElementById('preview-education');
+            educationContainer.innerHTML = '';
+            
+            const educationForms = document.querySelectorAll('.education-item-form');
+            
+            if (educationForms.length === 0 || !educationForms[0].querySelector('.degree').value) {
+                educationContainer.innerHTML = '<p>Your education information will appear here.</p>';
+            } else {
+                educationForms.forEach(form => {
+                    const degree = form.querySelector('.degree').value;
+                    const institution = form.querySelector('.institution').value;
+                    const location = form.querySelector('.location').value;
+                    const graduationDate = form.querySelector('.graduation-date').value;
+                    const gpa = form.querySelector('.gpa').value;
+                    
+                    if (!degree) return;
+                    
+                    const educationItem = document.createElement('div');
+                    educationItem.className = 'education-item';
+                    
+                    const itemHeader = document.createElement('div');
+                    itemHeader.className = 'item-header';
+                    
+                    const itemTitle = document.createElement('div');
+                    itemTitle.className = 'item-title';
+                    itemTitle.textContent = degree;
+                    
+                    const itemDate = document.createElement('div');
+                    itemDate.className = 'item-date';
+                    
+                    if (graduationDate) {
+                        const date = new Date(graduationDate);
+                        itemDate.textContent = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+                    }
+                    
+                    itemHeader.appendChild(itemTitle);
+                    itemHeader.appendChild(itemDate);
+                    
+                    const itemSubtitle = document.createElement('div');
+                    itemSubtitle.className = 'item-subtitle';
+                    itemSubtitle.textContent = `${institution}${location ? `, ${location}` : ''}${gpa ? ` | GPA: ${gpa}` : ''}`;
+                    
+                    educationItem.appendChild(itemHeader);
+                    educationItem.appendChild(itemSubtitle);
+                    
+                    educationContainer.appendChild(educationItem);
+                });
+            }
+            
+            // Skills
+            const skillsContainer = document.getElementById('preview-skills');
+            skillsContainer.innerHTML = '';
+            
+            const skillsText = document.getElementById('skills').value;
+            
+            if (!skillsText) {
+                skillsContainer.innerHTML = '<span class="skill-tag">Your skills will appear here</span>';
+            } else {
+                const skills = skillsText.split(',').map(skill => skill.trim()).filter(skill => skill);
+                
+                skills.forEach(skill => {
+                    const skillTag = document.createElement('span');
+                    skillTag.className = 'skill-tag';
+                    skillTag.textContent = skill;
+                    skillsContainer.appendChild(skillTag);
+                });
+            }
+        }
+        
+        // AI enhancement function (simulated)
+        function enhanceText(text, type) {
+            if (!text.trim()) return text;
+            
+            // In a real implementation, this would call an AI API
+            // For this demo, we'll simulate enhancement with some text transformations
+            
+            const enhancements = {
+                summary: [
+                    "Results-driven professional with a proven track record of",
+                    "Strategic thinker with expertise in",
+                    "Accomplished professional specializing in"
+                ],
+                experience: [
+                    "Spearheaded initiatives that resulted in",
+                    "Orchestrated comprehensive strategies for",
+                    "Pioneered innovative approaches to"
+                ]
+            };
+            
+            // Simple enhancement simulation
+            let enhancedText = text;
+            
+            if (type === 'summary' && !text.startsWith(enhancements.summary[0].substring(0, 10))) {
+                // Add a professional prefix to the summary
+                const randomPrefix = enhancements.summary[Math.floor(Math.random() * enhancements.summary.length)];
+                enhancedText = `${randomPrefix} ${text.toLowerCase()}`;
+            } else if (type === 'experience') {
+                // Enhance bullet points in experience descriptions
+                const lines = text.split('\n');
+                enhancedText = lines.map(line => {
+                    if (line.trim().length > 0) {
+                        const randomEnhancement = enhancements.experience[Math.floor(Math.random() * enhancements.experience.length)];
+                        return `${randomEnhancement} ${line.toLowerCase()}`;
+                    }
+                    return line;
+                }).join('\n');
+            }
+            
+            return enhancedText;
+        }
+        
+        // Download as PDF
+        document.getElementById('download-pdf').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const resumeElement = document.getElementById('resume-preview');
+            
+            // Use html2canvas to capture the resume as an image
+            html2canvas(resumeElement, {
+                scale: 2,
+                useCORS: true,
+                logging: false
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = doc.internal.pageSize.getWidth();
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                doc.save('resume.pdf');
+            });
+        });
+        
+        // Initialize with some sample data for demo purposes
+        window.addEventListener('DOMContentLoaded', () => {
+            // Set sample data
+            document.getElementById('fullName').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('location').value = '';
+            document.getElementById('linkedin').value = '';
+            document.getElementById('portfolio').value = '';
+            document.getElementById('summary').value = '';
+            
+            // Update preview with sample data
+            updateResumePreview();
+        });
+    </script>
+</body>
+</html>
